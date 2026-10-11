@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Scan QR · QR Attendance{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">ATTENDANCE CHECK-IN</p><h1>Scan student QR code</h1><p class="muted">Allow camera access when your browser asks.</p></div></div>
+<section class="panel scanner-panel">
+  <div id="reader"></div>
+  <div id="scan-result" class="scan-result" role="status">Camera scanner is starting…</div>
+  <p class="hint">If camera scanning does not work, open this site using <strong>http://127.0.0.1:5000</strong> on the same computer. Camera access generally requires HTTPS or localhost.</p>
+</section>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+const resultBox = document.getElementById("scan-result");
+let alreadySending = false;
+function showResult(message, good) {
+  resultBox.textContent = message;
+  resultBox.className = "scan-result " + (good ? "good" : "bad");
+}
+async function onScanSuccess(decodedText) {
+  if (alreadySending) return;
+  alreadySending = true;
+  try {
+    const response = await fetch("{{ url_for('record_attendance') }}", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({token: decodedText})
+    });
+    const data = await response.json();
+    showResult(data.message || "Attendance request finished.", response.ok);
+  } catch (error) {
+    showResult("Could not contact the server. Check that Flask is running.", false);
+  }
+  setTimeout(() => { alreadySending = false; }, 2500);
+}
+if (typeof Html5Qrcode !== "undefined") {
+  const scanner = new Html5Qrcode("reader");
+  scanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 230, height: 230 } },
+    onScanSuccess
+  ).then(() => showResult("Camera ready. Point it at a registered student's QR code.", true))
+   .catch(err => showResult("Could not start camera: " + err + ". Check camera permission and close other apps using the camera.", false));
+} else {
+  showResult("Scanner library did not load. Check your internet connection and refresh this page.", false);
+}
+</script>
+{% endblock %}

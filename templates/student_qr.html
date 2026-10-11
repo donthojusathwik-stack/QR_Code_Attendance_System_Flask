@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Student QR · QR Attendance{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">STUDENT QR CODE</p><h1>{{ student.name }}</h1><p class="muted">{{ student.student_id }} · {{ student.class_name }}</p></div><a class="button secondary" href="{{ url_for('dashboard') }}">Back to dashboard</a></div>
+<section class="panel qr-panel">
+  <img class="qr-image" src="{{ url_for('static', filename='qrcodes/' + qr_filename) }}" alt="QR code for {{ student.name }}">
+  <h2>{{ student.name }}</h2><p class="muted">Student ID: {{ student.student_id }}</p>
+  <p>Show this QR code to the administrator to record attendance.</p>
+  <button onclick="window.print()">Print QR code</button>
+</section>
+{% endblock %}
